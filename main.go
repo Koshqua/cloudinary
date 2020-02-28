@@ -100,7 +100,6 @@ func Dial(uri string) (*Service, error) {
 	}
 	admURL.User = url.UserPassword(s.apiKey, s.apiSecret)
 	s.adminURL = admURL
-
 	return s, nil
 }
 
