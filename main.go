@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"crypto/sha1"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -68,18 +67,20 @@ const (
 )
 
 //Dial configurates cloudinary service
-// cloudinary://api_key:api_secret@cloud_name
+//Link should be given in format
+//"cloudinary://api_key:api_secret@cloud_name"
+//After initialisation returns ready to use service or an error in case of incorrect URL
 func Dial(uri string) (*Service, error) {
 	u, err := url.Parse(uri)
 	if err != nil {
 		return nil, err
 	}
 	if u.Scheme != "cloudinary" {
-		return nil, errors.New("URL scheme is not cloudinary")
+		return nil, errNotCloudinary
 	}
 	secret, exists := u.User.Password()
 	if !exists {
-		return nil, errors.New("There is no api secret provided in URL")
+		return nil, errNoAPISecret
 	}
 	s := &Service{
 		cloudName: u.Hostname(),

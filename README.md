@@ -16,14 +16,37 @@ go get -u -v github.com/komfy/cloudinary
 package main
 
 import (
-    "fmt"
-
-    cloud "github.com/komfy/cloudinary"
+	"fmt"
+	"io"
+	"log"
+	"net/http"
+	"github.com/komfy/api/cloudinary"
 )
 
 func main() {
-    // todo
+    //Initialising the service struct
+    service, err := cloudinary.Dial("cloudinary://api_key:api_secret@cloud_name")
+	if err != nil {
+        log.Fatalln(err)
+    }
+	http.HandleFunc("/", handle)
+	http.ListenAndServe(":3000", nil)
 }
+//Just an example handle function 
+func handle(res http.ResponseWriter, req *http.Request) {
+	req.ParseMultipartForm(32 << 20)
+	_, fh, err := req.FormFile("file")
+	if err != nil {
+		log.Fatalln(err)
+	}
+	upResp, err := service.UploadFile(fh, false)
+	if err != nil {
+		io.WriteString(res, err.Error())
+    }
+    //Do something with response
+	fmt.Println(upResp)
+}
+
 ```
 
 ## License
