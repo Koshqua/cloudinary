@@ -5,12 +5,14 @@ import (
 	"bytes"
 	"crypto/sha1"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"net/url"
+	"os"
 	"path/filepath"
 	"strconv"
 	"time"
@@ -70,7 +72,7 @@ const (
 //Link should be given in format
 //"cloudinary://api_key:api_secret@cloud_name"
 //After initialisation returns ready to use service or an error in case of incorrect URL
-func Dial(uri string) (*Service, error) {
+func initService(uri string) (*Service, error) {
 	u, err := url.Parse(uri)
 	if err != nil {
 		return nil, err
@@ -104,30 +106,20 @@ func Dial(uri string) (*Service, error) {
 	return s, nil
 }
 
-//UploadFile receives file, most probably from Multipart Form, uploads to cloud and returns
-//a link to the resource
-func (s *Service) UploadFile(fh *multipart.FileHeader, randomPublicID bool) (*UploadResponse, error) {
+func (s *Service) upload(fileName string, file []byte, randomPublicID bool) (*UploadResponse, error) {
 	var publicID string
-	file, err := fh.Open()
-	if err != nil {
-		return nil, err
+
+	if len(file) == 0 {
+		return nil, fmt.Errorf("Not allowed to upload empty files: %s", fileName)
 	}
-	fileBuf, err := ioutil.ReadAll(file)
-	defer file.Close()
-	if err != nil {
-		return nil, err
-	}
-	if len(fileBuf) == 0 {
-		return nil, fmt.Errorf("Not allowed to upload empty files: %s", fh.Filename)
-	}
-	filename := trimExt(fh.Filename)
+	fNameWithoutExt := trimExt(fileName)
 
 	//Creating a form body for request
 	buf := new(bytes.Buffer)
 	mw := multipart.NewWriter(buf)
 	//Writing a public_id field for request
 	if !randomPublicID {
-		publicID = filename
+		publicID = fNameWithoutExt
 		pi, err := mw.CreateFormField("public_id")
 		if err != nil {
 			return nil, err
@@ -163,11 +155,11 @@ func (s *Service) UploadFile(fh *multipart.FileHeader, randomPublicID bool) (*Up
 	signature := fmt.Sprintf("%x", hash.Sum(nil))
 	si.Write([]byte(signature))
 
-	fi, err := mw.CreateFormFile("file", fh.Filename)
+	fi, err := mw.CreateFormFile("file", fNameWithoutExt)
 	if err != nil {
 		return nil, err
 	}
-	fi.Write(fileBuf)
+	fi.Write(file)
 
 	err = mw.Close()
 	if err != nil {
@@ -194,4 +186,62 @@ func (s *Service) UploadFile(fh *multipart.FileHeader, randomPublicID bool) (*Up
 func trimExt(filename string) string {
 	fileExt := filepath.Ext(filename)
 	return filename[0 : len(filename)-len(fileExt)]
+}
+
+//UploadLocalFile uploads file from os and returns url to resource
+func (s *Service) UploadLocalFile(file *os.File, randomPublicID bool) (*UploadResponse, error) {
+	fi, err := file.Stat()
+	if err != nil {
+		return nil, err
+	}
+	filename := fi.Name()
+	buffer, err := ioutil.ReadAll(file)
+	if err != nil {
+		return nil, err
+	}
+	upResp, err := s.upload(filename, buffer, randomPublicID)
+	if err != nil {
+		return nil, err
+	}
+	return upResp, nil
+}
+
+//UploadFromForm uploads a file from multipart form, it also takes care of parsing the form.
+func (s *Service) UploadFromForm(req *http.Request, fieldname string, randomPublicID bool) (*UploadResponse, error) {
+	file, fh, err := req.FormFile(fieldname)
+	if err != nil {
+		return nil, err
+	}
+	filename := fh.Filename
+	buffer, err := ioutil.ReadAll(file)
+	if err != nil {
+		return nil, err
+	}
+	upResp, err := s.upload(filename, buffer, randomPublicID)
+	if err != nil {
+		return nil, err
+	}
+	return upResp, nil
+}
+
+//NewService inits a *Service from cloudinaryURL
+func NewService(cloudinaryURL string) (*Service, error) {
+	service, err := initService(cloudinaryURL)
+	if err != nil {
+		return nil, err
+	}
+	return service, nil
+}
+
+//NewServiceFromEnv looks for enviromental variable with given key and initiates a *Service.
+func NewServiceFromEnv(envKey string) (*Service, error) {
+	url := os.Getenv(envKey)
+	if url == "" {
+		return nil, errors.New("There is no enviromental variable with given key")
+	}
+	service, err := initService(url)
+	if err != nil {
+		return nil, err
+	}
+	return service, nil
 }
