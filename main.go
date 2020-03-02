@@ -42,27 +42,6 @@ type UploadResponse struct {
 	URL          string    `json:"url"`
 }
 
-// {
-// 	"public_id":"Screen Shot 2020-01-12 at 1.20.21 PM",
-// 	"version":1580912870,
-// 	"signature":"3137036a0f6a742dbde09074d44e7d8528409682",
-// 	"width":1440,
-// 	"height":900,
-// 	"format":"png",
-// 	"resource_type":"image",
-// 	"created_at":"2020-02-05T14:27:50Z",
-// 	"tags":[
-
-// 	],
-// 	"bytes":1135076,
-// 	"type":"upload",
-// 	"etag":"14f65dc9ab21f5868a0f2b29c02f326a",
-// 	"placeholder":false,
-// 	"url":"http://res.cloudinary.com/mlvni/image/upload/v1580912870/Screen%20Shot%202020-01-12%20at%201.20.21%20PM.png",
-// 	"secure_url":"https://res.cloudinary.com/mlvni/image/upload/v1580912870/Screen%20Shot%202020-01-12%20at%201.20.21%20PM.png",
-// 	"original_filename":"Screen Shot 2020-01-12 at 1.20.21 PM"
-//  }
-
 const (
 	baseUploadURL string = "https://api.cloudinary.com/v1_1"
 	imageType     int    = 0

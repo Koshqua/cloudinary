@@ -1,19 +1,3 @@
-# cloudinary
-
-![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/komfy/cloudinary?style=flat-square)
-[![GoDoc](https://godoc.org/github.com/komfy/cloudinary?status.svg)](https://godoc.org/github.com/komfy/cloudinary)
-
-Cloudinary API wrapper in Go.
-
-## Installation
-
-```
-go get -u -v github.com/komfy/cloudinary
-```
-
-## Example
-
-```go
 package main
 
 import (
@@ -66,9 +50,3 @@ func main() {
 	http.Handle("/download", handleDownload{cs: s})
 	http.ListenAndServe(":3000", nil)
 }
-
-```
-
-## License
-
-MIT
