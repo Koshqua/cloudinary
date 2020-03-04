@@ -1,7 +1,7 @@
 # cloudinary
 
 ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/komfy/cloudinary?style=flat-square)
-[![GoDoc](https://godoc.org/github.com/komfy/cloudinary?status.svg)](pkg.go.dev/github.com/komfy/cloudinary)
+[![GoDoc](https://godoc.org/github.com/komfy/cloudinary?status.svg)](https://pkg.go.dev/github.com/komfy/cloudinary)
 
 Cloudinary API wrapper in Go.
 
