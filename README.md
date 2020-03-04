@@ -11,25 +11,31 @@ Cloudinary API wrapper in Go.
 go get -u -v github.com/komfy/cloudinary
 ```
 
-## Example
+## Examples
 
-```go
-package main
+### Create a service from enviromental variable
+``` go 
+s, err := cloudinary.NewServiceFromEnv("CLOUDINARY_URL")
+	if err != nil {
+		log.Fatalln(err)
+	}
+```
+### Create a service from cloudinary url
+```go 
+s, err := cloudinary.NewService("cloudinary://api_key:api_secret@cloud_name")
+    if err != nil {
+        log.Fatalln(err)
+    }
+```
 
-import (
-	"fmt"
-	"log"
-	"net/http"
-	"os"
 
-	"github.com/komfy/cloudinary"
-)
-
-type handleDownload struct {
+### Upload from a form
+```go 
+type downloadHandler struct {
 	cs *cloudinary.Service
 }
 
-func (h handleDownload) ServeHTTP(res http.ResponseWriter, req *http.Request) {
+func (h downloadHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodPost {
 		http.Error(res, "Method must be POST", http.StatusMethodNotAllowed)
 		return
@@ -45,16 +51,10 @@ func (h handleDownload) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	url := upResp.SecureURL
 	res.Write([]byte(url))
 }
-
-func main() {
-	//Creates new Service from enviromental variable
-	//In case you want to Create Service from a string
-	//Use cloudinary.NewService(url string)
-	s, err := cloudinary.NewServiceFromEnv("CLOUDINARY_URL")
-	if err != nil {
-		log.Fatalln(err)
-	}
-	file, err := os.Open("example.jpg")
+```
+### Download from the os.File 
+``` go 
+    file, err := os.Open("example.jpg")
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -62,12 +62,24 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	fmt.Println(upResp.URL)
-	http.Handle("/download", handleDownload{cs: s})
-	http.ListenAndServe(":3000", nil)
-}
-
 ```
+### Raw upload from file data []byte and filename
+``` go 
+file, err := os.Open("example.jpg")
+	if err != nil {
+		log.Fatalln(err)
+    }
+buffer, err := ioutil.ReadAll(file)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	//There is no need to take care of file extensions. Upload will take trim it by it's own.
+	upResp, err = s.Upload(file.Name(), buffer, false)
+	if err != nil {
+		log.Fatalln(err)
+	}
+```
+
 
 ## License
 

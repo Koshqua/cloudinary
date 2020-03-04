@@ -85,7 +85,8 @@ func initService(uri string) (*Service, error) {
 	return s, nil
 }
 
-func (s *Service) upload(fileName string, file []byte, randomPublicID bool) (*UploadResponse, error) {
+//Upload uploads a file.
+func (s *Service) Upload(fileName string, file []byte, randomPublicID bool) (*UploadResponse, error) {
 	var publicID string
 
 	if len(file) == 0 {
@@ -178,7 +179,7 @@ func (s *Service) UploadLocalFile(file *os.File, randomPublicID bool) (*UploadRe
 	if err != nil {
 		return nil, err
 	}
-	upResp, err := s.upload(filename, buffer, randomPublicID)
+	upResp, err := s.Upload(filename, buffer, randomPublicID)
 	if err != nil {
 		return nil, err
 	}
@@ -196,7 +197,7 @@ func (s *Service) UploadFromForm(req *http.Request, fieldname string, randomPubl
 	if err != nil {
 		return nil, err
 	}
-	upResp, err := s.upload(filename, buffer, randomPublicID)
+	upResp, err := s.Upload(filename, buffer, randomPublicID)
 	if err != nil {
 		return nil, err
 	}

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -9,11 +10,11 @@ import (
 	"github.com/komfy/cloudinary"
 )
 
-type handleDownload struct {
+type downloadHandler struct {
 	cs *cloudinary.Service
 }
 
-func (h handleDownload) ServeHTTP(res http.ResponseWriter, req *http.Request) {
+func (h downloadHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodPost {
 		http.Error(res, "Method must be POST", http.StatusMethodNotAllowed)
 		return
@@ -46,7 +47,19 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
+	//The same but with the raw cloudinary.UploadFunction
+	//So here it's up to you how you wanna to handle files.
+	//You just need to provide the filename and []byte as a file data.
+	buffer, err := ioutil.ReadAll(file)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	//There is no need to take care of file extensions. Upload will take trim it by it's own.
+	upResp, err = s.Upload(file.Name(), buffer, false)
+	if err != nil {
+		log.Fatalln(err)
+	}
 	fmt.Println(upResp.URL)
-	http.Handle("/download", handleDownload{cs: s})
+	http.Handle("/download", downloadHandler{cs: s})
 	http.ListenAndServe(":3000", nil)
 }
