@@ -17,14 +17,14 @@ go get -u -v github.com/komfy/cloudinary
 ### Create a service from environmental variable
 
 ```go 
-	cloudinaryURL := os.Getenv("CLOUDINARY_URL")
-	if cloudinaryURL == "" {
-		log.Fatalln("there is no env variable with give name")
-	}
-	s, err := cloudinary.NewService(cloudinaryURL)
-	if err != nil {
-		log.Fatalln(err)
-	}
+cloudinaryURL := os.Getenv("CLOUDINARY_URL")
+if cloudinaryURL == "" {
+	log.Fatalln("there is no env variable with give name")
+}
+s, err := cloudinary.NewService(cloudinaryURL)
+if err != nil {
+	log.Fatalln(err)
+}
 ```
 
 
