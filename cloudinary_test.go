@@ -11,13 +11,13 @@ import (
 // 	if err != nil {
 // 		//Do something with error
 // 	}
-// 	//After initialisation we receive a service which is ready to use.
+// 	//After initialization we receive a service which is ready to use.
 // 	fmt.Println(service)
 // }
 
 func TestInitService(t *testing.T) {
 	t.Run("Sample test case", func(t *testing.T) {
-		service, err := initService("cloudinary://api_key:api_secret@cloud_name")
+		service, err := NewService("cloudinary://api_key:api_secret@cloud_name")
 		if err != nil {
 			t.Errorf("Unexpected error %v", err)
 		}
@@ -37,7 +37,7 @@ func TestInitService(t *testing.T) {
 		}
 	})
 	t.Run("No host provided", func(t *testing.T) {
-		_, err := initService("https:://api_key:api_secret@cloud_name")
+		_, err := NewService("https://api_key:api_secret@cloud_name")
 		if err != errNotCloudinary {
 			t.Errorf("Expected error %v, got %v", errNotCloudinary, err)
 		}

@@ -1,24 +1,22 @@
-//Package cloudinary provides an easy way of connection between go and cloudinary
+// Package cloudinary provides an easy way of connection between go and cloudinary
 package cloudinary
 
 import (
 	"bytes"
 	"crypto/sha1"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"net/url"
-	"os"
 	"path/filepath"
 	"strconv"
 	"time"
 )
 
-//Service represents cloudinary service
+// Service represents cloudinary service
 type Service struct {
 	cloudName string
 	apiKey    string
@@ -30,13 +28,13 @@ type Service struct {
 	resType   int
 }
 
-//UploadResponse ...
+// UploadResponse ...
 type UploadResponse struct {
 	PublicID     string    `json:"public_id"`
 	Width        int       `json:"width"`
 	Height       int       `json:"height"`
 	Format       string    `json:"format"`
-	ResourseType string    `json:"resource_type"`
+	ResourceType string    `json:"resource_type"`
 	CreatedAt    time.Time `json:"created_at"`
 	SecureURL    string    `json:"secure_url"`
 	URL          string    `json:"url"`
@@ -47,12 +45,12 @@ const (
 	imageType     int    = 0
 )
 
-//Dial configurates cloudinary service
-//Link should be given in format
-//"cloudinary://api_key:api_secret@cloud_name"
-//After initialisation returns ready to use service or an error in case of incorrect URL
-func initService(uri string) (*Service, error) {
-	u, err := url.Parse(uri)
+// NewService inits a *Service from cloudinaryURL
+// Link should be given in format
+// "cloudinary://api_key:api_secret@cloud_name"
+// After initialization returns ready to use service or an error in case of incorrect URL
+func NewService(cloudinaryURL string) (*Service, error) {
+	u, err := url.Parse(cloudinaryURL)
 	if err != nil {
 		return nil, err
 	}
@@ -85,16 +83,19 @@ func initService(uri string) (*Service, error) {
 	return s, nil
 }
 
-//Upload uploads a file.
-func (s *Service) Upload(fileName string, file []byte, randomPublicID bool) (*UploadResponse, error) {
+// Upload uploads a file
+func (s *Service) Upload(fileName string, fileBody io.Reader, randomPublicID bool) (*UploadResponse, error) {
 	var publicID string
-
+	file, err := ioutil.ReadAll(fileBody)
+	if err != nil {
+		return nil, err
+	}
 	if len(file) == 0 {
-		return nil, fmt.Errorf("Not allowed to upload empty files: %s", fileName)
+		return nil, fmt.Errorf("not allowed to upload empty files: %s", fileName)
 	}
 	fNameWithoutExt := trimExt(fileName)
 
-	//Creating a form body for request
+	// Creating a form body for request
 	buf := new(bytes.Buffer)
 	mw := multipart.NewWriter(buf)
 	//Writing a public_id field for request
@@ -106,14 +107,14 @@ func (s *Service) Upload(fileName string, file []byte, randomPublicID bool) (*Up
 		}
 		pi.Write([]byte(publicID))
 	}
-	//Writing an API key
+	// Writing an API key
 	ak, err := mw.CreateFormField("api_key")
 	if err != nil {
 		return nil, err
 	}
 	ak.Write([]byte(s.apiKey))
 
-	//Writing timestamp
+	// Writing timestamp
 	ts, err := mw.CreateFormField("timestamp")
 	if err != nil {
 		return nil, err
@@ -121,7 +122,7 @@ func (s *Service) Upload(fileName string, file []byte, randomPublicID bool) (*Up
 	timestamp := strconv.FormatInt(time.Now().Unix(), 10)
 	ts.Write([]byte(timestamp))
 
-	//Writing signature
+	// Writing signature
 	si, err := mw.CreateFormField("signature")
 	if err != nil {
 		return nil, err
@@ -166,62 +167,4 @@ func (s *Service) Upload(fileName string, file []byte, randomPublicID bool) (*Up
 func trimExt(filename string) string {
 	fileExt := filepath.Ext(filename)
 	return filename[0 : len(filename)-len(fileExt)]
-}
-
-//UploadLocalFile uploads file from os and returns url to resource
-func (s *Service) UploadLocalFile(file *os.File, randomPublicID bool) (*UploadResponse, error) {
-	fi, err := file.Stat()
-	if err != nil {
-		return nil, err
-	}
-	filename := fi.Name()
-	buffer, err := ioutil.ReadAll(file)
-	if err != nil {
-		return nil, err
-	}
-	upResp, err := s.Upload(filename, buffer, randomPublicID)
-	if err != nil {
-		return nil, err
-	}
-	return upResp, nil
-}
-
-//UploadFromForm uploads a file from multipart form, it also takes care of parsing the form.
-func (s *Service) UploadFromForm(req *http.Request, fieldname string, randomPublicID bool) (*UploadResponse, error) {
-	file, fh, err := req.FormFile(fieldname)
-	if err != nil {
-		return nil, err
-	}
-	filename := fh.Filename
-	buffer, err := ioutil.ReadAll(file)
-	if err != nil {
-		return nil, err
-	}
-	upResp, err := s.Upload(filename, buffer, randomPublicID)
-	if err != nil {
-		return nil, err
-	}
-	return upResp, nil
-}
-
-//NewService inits a *Service from cloudinaryURL
-func NewService(cloudinaryURL string) (*Service, error) {
-	service, err := initService(cloudinaryURL)
-	if err != nil {
-		return nil, err
-	}
-	return service, nil
-}
-
-//NewServiceFromEnv looks for enviromental variable with given key and initiates a *Service.
-func NewServiceFromEnv(envKey string) (*Service, error) {
-	url := os.Getenv(envKey)
-	if url == "" {
-		return nil, errors.New("There is no enviromental variable with given key")
-	}
-	service, err := initService(url)
-	if err != nil {
-		return nil, err
-	}
-	return service, nil
 }
