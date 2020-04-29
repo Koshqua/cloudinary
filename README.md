@@ -14,32 +14,31 @@ go get -u -v github.com/komfy/cloudinary
 ## Examples
 
 
-### Create a service from environmental variable
+
 
 ```go 
-cloudinaryURL := os.Getenv("CLOUDINARY_URL")
-if cloudinaryURL == "" {
-	log.Fatalln("there is no env variable with give name")
-}
-s, err := cloudinary.NewService(cloudinaryURL)
-if err != nil {
-	log.Fatalln(err)
-}
-```
+package main
 
+import (
+	"fmt"
+	"log"
+	"net/http"
+	"os"
 
-### Upload from a form
-```go 
+	"github.com/komfy/cloudinary"
+)
+
 type downloadHandler struct {
 	cs *cloudinary.Service
 }
-
+//Creating a handler to donwload from form.
+//I prefer to use handlers, because it's easier to add some external services into it's logic.
 func (h downloadHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodPost {
 		http.Error(res, "Method must be POST", http.StatusMethodNotAllowed)
 		return
 	}
-	//Parsing multipart form is not necessary, FormFile invokes it if form isn't parsed.
+	// Parsing multipart form is not necessary, FormFile invokes it if form isn't parsed.
 	file, fh, err := req.FormFile("file")
 	upResp, err := h.cs.Upload(fh.Filename, file, false)
 	if err != nil {
@@ -49,9 +48,17 @@ func (h downloadHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	url := upResp.SecureURL
 	res.Write([]byte(url))
 }
-```
-### Download from the os.File 
-``` go 
+
+func main() {
+	// Creates new Service from environmental variable
+	cloudinaryURL := os.Getenv("CLOUDINARY_URL")
+	if cloudinaryURL == "" {
+		log.Fatalln("there is no env variable with given name")
+	}
+	s, err := cloudinary.NewService(cloudinaryURL)
+	if err != nil {
+		log.Fatalln(err)
+	}
 	// Sending local file.
 	file, err := os.Open("example.jpg")
 	if err != nil {
@@ -61,6 +68,11 @@ func (h downloadHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		log.Fatalln(err)
 	}
+
+	fmt.Println(upResp.URL)
+	http.Handle("/download", downloadHandler{cs: s})
+	http.ListenAndServe(":3000", nil)
+}
 ```
 
 
