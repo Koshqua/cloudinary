@@ -11,10 +11,7 @@ Cloudinary API wrapper in Go.
 go get -u -v github.com/komfy/cloudinary
 ```
 
-## Examples
-
-
-
+## Example
 
 ```go 
 package main
